@@ -14,7 +14,9 @@ find_package(catkin REQUIRED)
 find_package(catkin REQUIRED COMPONENTS 
 	roscpp
 	dynamixel_workbench_msgs
-  	dynamixel_workbench_toolbox
+	dynamixel_workbench_toolbox
+	std_msgs
+	message_generation
 )
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -47,11 +49,10 @@ find_package(catkin REQUIRED COMPONENTS
 ##   * add every package in MSG_DEP_SET to generate_messages(DEPENDENCIES ...)
 
 ## Generate messages in the 'msg' folder
-# add_message_files(
-#   FILES
-#   Message1.msg
-#   Message2.msg
-# )
+add_message_files(
+   FILES
+   ServoPosition.msg
+ )
 
 ## Generate services in the 'srv' folder
 # add_service_files(
@@ -68,10 +69,10 @@ find_package(catkin REQUIRED COMPONENTS
 # )
 
 ## Generate added messages and services with any dependencies listed here
-# generate_messages(
-#   DEPENDENCIES
-#   std_msgs  # Or other packages containing msgs
-# )
+ generate_messages(
+  DEPENDENCIES
+  std_msgs  # Or other packages containing msgs
+ )
 
 ################################################
 ## Declare ROS dynamic reconfigure parameters ##
@@ -105,7 +106,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES hello_ros
-#  CATKIN_DEPENDS other_catkin_pkg
+	CATKIN_DEPENDS message_runtime
 #  DEPENDS system_lib
 )
 

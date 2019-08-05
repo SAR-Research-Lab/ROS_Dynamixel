@@ -1,9 +1,8 @@
-// This is a ROS version of the standard "hello, world"
-// program.
 
 // This header defines the standard ROS classes.
 #include <ros/ros.h>
-#include "/home/rebecca/projects/ECE591_WS/src/dynamixel-workbench/dynamixel_workbench_toolbox/include/dynamixel_workbench_toolbox/dynamixel_workbench.h"
+#include "dynamixel_includes.h"
+#include "dynamixel_control/ServoPosition.h"
 
 static uint8_t left_right_id; 
 static uint8_t forward_back_id;
