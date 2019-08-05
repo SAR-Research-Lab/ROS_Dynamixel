@@ -1,0 +1,3 @@
+int32 servoCurrentPosition
+int32 servoGoalPoition
+
