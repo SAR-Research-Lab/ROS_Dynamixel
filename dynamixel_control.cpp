@@ -8,6 +8,7 @@
 /*****************************************************
  *              Prototypes                           *
  *****************************************************/
+static void set_servo_position(int32_t requested_degree); 
 static void Ros_Init(int argc, char **argv); 
 static bool Dynamixel_Init(void); 
 
@@ -39,41 +40,30 @@ void goalPositionCallback(dynamixel_control::ServoPosition requestedServoPositio
   float       servoRadValue; 
   float       radianValue;
   const char* log;
- 
-  my_dynamixel.getRadian(left_right_id, &radianValue, &log); 
-  currentDegreeValue = RAD2DEG(radianValue);
-  
-  /* Convert degrees to radians */
-  if(requestedServoPosition.servoClockWiseRotation == 0)
+
+  if(requestedServoPosition.servoSetCenter == 1)
   {
-    requestedDegreeValue = currentDegreeValue + requestedServoPosition.servoDegreeRotation; 
+    set_servo_position(SERVO_DEGREE_CENTER);
   }
   else
   {
-    requestedDegreeValue = currentDegreeValue - requestedServoPosition.servoDegreeRotation; 
-  }
+    my_dynamixel.getRadian(left_right_id, &radianValue, &log); 
+    currentDegreeValue = RAD2DEG(radianValue);
 
-  /* Bounds check */
-  if(requestedDegreeValue < SERVO_DEGREE_MIN)
-  {
-     requestedDegreeValue = SERVO_DEGREE_MIN; 
-  }
-  else if(requestedDegreeValue > SERVO_DEGREE_MAX)
-  {
-     requestedDegreeValue = SERVO_DEGREE_MAX; 
-  }
-  else
-  {
-     /* Do nothing */
-  }
+    /* Convert degrees to radians */
+    if(requestedServoPosition.servoClockWiseRotation == 0)
+    {
+        requestedDegreeValue = currentDegreeValue + requestedServoPosition.servoDegreeRotation; 
+    }
+    else
+    {
+        requestedDegreeValue = currentDegreeValue - requestedServoPosition.servoDegreeRotation; 
+    }
 
-  ROS_INFO("Requested final degree: %f", requestedDegreeValue);
-  
-  /* Convert back to radians */
-  servoRadValue = DEG2RAD(requestedDegreeValue); 
- 
-  /* Send the position to the servo */
-  my_dynamixel.goalPosition(left_right_id, servoRadValue, &log);
+    set_servo_position(requestedDegreeValue);
+
+    ROS_INFO("Requested final degree: %f", requestedDegreeValue);
+  }
 }
 
 /*****************************************************
@@ -129,6 +119,73 @@ static bool Dynamixel_Init(void)
 }
 
 /*****************************************************
+ *              Set the requested
+ *              position of the servo                           
+ *****************************************************/
+static void set_servo_position(int32_t requested_degree)
+{    
+    float       currentDegreeValue; 
+    float       requestedDegreeValue; 
+    float       servoRadValue; 
+    float       radianValue;
+    const char* log;
+
+    /* Bounds check */
+    if(requested_degree < SERVO_DEGREE_MIN)
+    {
+        requested_degree = SERVO_DEGREE_MIN; 
+    }
+    else if(requested_degree > SERVO_DEGREE_MAX)
+    {
+        requested_degree = SERVO_DEGREE_MAX; 
+    }
+    else
+    {
+        /* Do nothing */
+    }
+ 
+    /* Get the current position of the servo */
+    my_dynamixel.getRadian(left_right_id, &radianValue, &log); 
+    currentDegreeValue = RAD2DEG(radianValue);
+    
+    /* Determine which way to turn */
+    if(requested_degree > currentDegreeValue)
+    {
+        while(currentDegreeValue <= requested_degree)
+        {
+            currentDegreeValue = currentDegreeValue + 1;
+                        
+            /* Convert back to radians */
+            servoRadValue = DEG2RAD(currentDegreeValue); 
+ 
+            /* Send the position to the servo */
+            my_dynamixel.goalPosition(left_right_id, servoRadValue, &log);
+            
+            /* Get the new position */
+            my_dynamixel.getRadian(left_right_id, &radianValue, &log); 
+            currentDegreeValue = RAD2DEG(radianValue);
+        }
+    }
+    else
+    {
+        while(currentDegreeValue >= requested_degree)
+        {
+            currentDegreeValue = currentDegreeValue - 1;
+                        
+            /* Convert back to radians */
+            servoRadValue = DEG2RAD(currentDegreeValue); 
+ 
+            /* Send the position to the servo */
+            my_dynamixel.goalPosition(left_right_id, servoRadValue, &log);
+            
+            /* Get the new position */
+            my_dynamixel.getRadian(left_right_id, &radianValue, &log); 
+            currentDegreeValue = RAD2DEG(radianValue);
+        }
+    }
+}
+
+/*****************************************************
  *              Main Entry Point                     *
  *****************************************************/
 int main(int argc, char **argv) 
@@ -151,8 +208,7 @@ int main(int argc, char **argv)
   if(Dynamixel_Init() == true)     
   {
     /* Start up servo centered */
-    radianValue = DEG2RAD(SERVO_DEGREE_CENTER); 
-    my_dynamixel.goalPosition(left_right_id, radianValue, &log);
+    set_servo_position(SERVO_DEGREE_CENTER);
 
     /* Loop forever */    
     while(ros::ok())
